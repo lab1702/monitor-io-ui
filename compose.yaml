@@ -1,0 +1,23 @@
+services:
+  netmon:
+    build:
+      context: .
+      pull: true            # fetch the newest python:slim on every build
+    image: netmon-dashboard
+    restart: unless-stopped
+    ports:
+      # dashboard at http://<this machine>:8080/ (reachable from the LAN); change
+      # the left side for another host port, or use "127.0.0.1:8080:8080" for local only
+      - "8080:8080"
+    environment:
+      NETMON_DEVICE: http://192.168.0.246/
+      NETMON_MEMORY_DAYS: "90"
+      # the device's time zone; used when its CSVs carry an unrecognised zone abbreviation
+      TZ: America/New_York
+    volumes:
+      # cached CSVs, archives and summaries: the long-term history, since the
+      # device loses all its files on power loss
+      - netmon-data:/data
+
+volumes:
+  netmon-data:

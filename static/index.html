@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetMonitor Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>NetMonitor</h1>
+    <span class="muted" id="device-url"></span>
+  </div>
+  <div class="topbar-right">
+    <span class="pill" id="freshness"><span class="dot"></span><span class="txt">Connecting…</span></span>
+    <label class="toggle"><input type="checkbox" id="auto-refresh" checked> Auto-refresh</label>
+    <button id="theme-btn" class="ghost" title="Toggle light/dark">◐</button>
+  </div>
+</header>
+
+<main>
+  <div class="banner" id="banner" hidden></div>
+
+  <!-- ===================== CURRENT STATUS ===================== -->
+  <section>
+    <div class="section-head">
+      <h2>Current status</h2>
+      <span class="muted" id="last-sample"></span>
+    </div>
+    <div class="health" id="health"></div>
+    <div class="targets" id="targets"></div>
+  </section>
+
+  <!-- ===================== DNS ===================== -->
+  <section>
+    <div class="section-head">
+      <h2>DNS</h2>
+      <span class="muted">Hostname targets the device could not resolve. A DNS failure makes the device skip those targets and log a <code>DNS:Failure(s)</code> marker.</span>
+    </div>
+    <div class="dns-grid">
+      <div class="card" id="dns-now"></div>
+      <div class="card">
+        <h3>DNS failures per day</h3>
+        <div id="dns-daily-chart" class="chart small"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>DNS incidents <span class="muted" id="dns-inc-note"></span></h3>
+      <div class="table-wrap"><table id="dns-table"><thead><tr>
+        <th>Started</th><th>Duration</th><th>Probe cycles</th><th>Hosts not resolved</th><th>Likely cause</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ===================== HISTORY ===================== -->
+  <section>
+    <div class="section-head">
+      <h2>History</h2>
+      <span class="muted" id="range-label"></span>
+    </div>
+    <div class="filters">
+      <div class="seg" id="presets">
+        <button data-p="3600">1h</button>
+        <button data-p="21600">6h</button>
+        <button data-p="86400" class="on">24h</button>
+        <button data-p="604800">7d</button>
+        <button data-p="2592000">30d</button>
+        <button data-p="all">All</button>
+      </div>
+      <label class="dt">From <input type="datetime-local" id="from"></label>
+      <label class="dt">To <input type="datetime-local" id="to"></label>
+      <button id="apply-range">Apply</button>
+      <span class="sep"></span>
+      <div class="seg" id="lat-metric">
+        <button data-m="avg" class="on">Avg</button>
+        <button data-m="max">Max</button>
+        <button data-m="min">Min</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="log-scale"> Log scale</label>
+    </div>
+    <div class="chips" id="target-chips"></div>
+
+    <div class="card chart-card" id="hist-cards">
+      <h3>Latency <span class="muted" id="lat-sub">ms</span></h3>
+      <div id="lat-chart" class="chart"></div>
+      <h3>Packet loss <span class="muted">% of pings lost</span></h3>
+      <div id="loss-chart" class="chart medium"></div>
+      <h3>DNS failures <span class="muted" id="dns-sub">probe cycles with a DNS failure</span></h3>
+      <div id="dnsh-chart" class="chart small"></div>
+      <p class="muted hint">Drag across any chart to zoom. Shaded bands mark incidents: <span class="key k-out"></span> outage, <span class="key k-dns"></span> DNS failure, <span class="key k-loss"></span> heavy loss.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Incidents in range</h3>
+        <div class="seg small" id="inc-filter">
+          <button data-k="" class="on">All</button>
+          <button data-k="wan_down">Internet down</button>
+          <button data-k="lan_down">Gateway down</button>
+          <button data-k="dns">DNS</button>
+          <button data-k="loss">Packet loss</button>
+          <button data-k="gap">Gaps</button>
+        </div>
+      </div>
+      <div class="table-wrap"><table id="inc-table"><thead><tr>
+        <th>Type</th><th>Started</th><th>Duration</th><th>Details</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ===================== DAILY ===================== -->
+  <section>
+    <div class="section-head">
+      <h2>Daily summary</h2>
+      <span class="muted">Click a day to load it into History.</span>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table id="daily-table"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ===================== DEVICE EVENTS ===================== -->
+  <section>
+    <div class="section-head">
+      <h2>Device event log</h2>
+      <span class="muted">Rows the device flagged in NetMonitor_Event_Summary.csv (loss, latency spikes, DNS failures) within the History range.</span>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="seg small" id="ev-filter">
+          <button data-o="" class="on">All</button>
+          <button data-o="loss">With loss</button>
+          <button data-o="dns">DNS failures</button>
+        </div>
+        <div class="pager"><button id="ev-prev">‹</button><span id="ev-page" class="muted"></span><button id="ev-next">›</button></div>
+      </div>
+      <div class="table-wrap"><table id="ev-table"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<div id="tooltip" class="tooltip" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/uplot@1.6.30/dist/uPlot.iife.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
